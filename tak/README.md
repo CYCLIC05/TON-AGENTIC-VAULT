@@ -47,6 +47,104 @@ The web interface is purely demonstrative. It shows what's possible but isn't th
 
 ---
 
+## Quickstart
+
+### Installation
+
+```bash
+npm install tak-sdk
+```
+
+### Node.js Example
+
+```javascript
+const TakClient = require('tak-sdk');
+
+const tak = new TakClient('http://localhost:3000');
+
+// 1. Create a request
+const request = await tak.createRequest({
+    requester_agent_id: 'ag_buyer_001',
+    service_query: 'market_data Q4',
+    max_price_nano: 2000000000
+});
+
+// 2. Get offers
+const offers = await tak.getRequestOffers(request.id);
+
+// 3. Accept best offer
+await tak.acceptOffer(offers[0].id);
+
+// 4. Create deal
+const deal = await tak.createDeal({
+    request_id: request.id,
+    offer_id: offers[0].id
+});
+
+// 5. Approve
+await tak.approveDeal(deal.id);
+
+// 6. Execute
+const result = await tak.executeDeal(deal.id);
+console.log('Receipt:', result.execution_receipt);
+```
+
+### cURL Examples
+
+**Create Request:**
+```bash
+curl -X POST http://localhost:3000/api/requests \
+  -H "Content-Type: application/json" \
+  -d '{
+    "requester_agent_id": "ag_buyer_001",
+    "service_query": "market_data Q4",
+    "max_price_nano": 2000000000,
+    "schema_version": "tak/0.1",
+    "idempotency_key": "req_'$(date +%s%N)'"
+  }'
+```
+
+**Get All Offers:**
+```bash
+curl http://localhost:3000/api/offers
+```
+
+**Accept Offer:**
+```bash
+curl -X PUT http://localhost:3000/api/offers/off_abc123 \
+  -H "Content-Type: application/json" \
+  -d '{"status": "accepted"}'
+```
+
+**Approve Deal:**
+```bash
+curl -X POST http://localhost:3000/api/deals/deal_abc123/approve \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+**Execute Deal:**
+```bash
+curl -X POST http://localhost:3000/api/deals/deal_abc123/execute \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+### Browser Demo
+
+Open `index.html` for an interactive 6-stage visualization:
+
+```bash
+# Open in browser
+open file:///path/to/tak/index.html
+
+# Or serve with Python
+python3 -m http.server 8000
+# Visit http://localhost:8000/index.html
+```
+
+---
+
 ## Use Case
 
 **Machine-to-Machine Service Marketplace**
