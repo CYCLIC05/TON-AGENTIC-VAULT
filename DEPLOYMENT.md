@@ -42,7 +42,7 @@ docker run -p 3000:3000 \
 Create `docker-compose.yml`:
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   tak-server:
@@ -188,16 +188,19 @@ tail npm-debug.log
 ## Integration with TON Network
 
 ### Phase 1: Development (Current)
+
 - MCPAdapter: `MockMCPAdapter`
 - Returns fake receipts
 - No blockchain required
 
 ### Phase 2: Testnet
+
 - MCPAdapter: `TONMCPAdapter`
 - Testnet RPC endpoint
 - Real transactions on testnet
 
 ### Phase 3: Mainnet
+
 - MCPAdapter: `TONMCPAdapter`
 - Mainnet RPC endpoint
 - Production settlement

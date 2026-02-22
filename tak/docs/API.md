@@ -109,6 +109,7 @@ Create a new agent.
 Get all services.
 
 **Query Parameters:**
+
 - `agent_id` — Filter by provider agent
 
 **Response:**
@@ -162,6 +163,7 @@ List a new service.
 Get all requests.
 
 **Query Parameters:**
+
 - `status` — Filter by status (open, accepted, closed)
 
 **Response:**
@@ -301,6 +303,7 @@ Accept or reject an offer. When accepted, all competing offers are auto-rejected
 Get all deals.
 
 **Query Parameters:**
+
 - `status` — Filter by status (awaiting_approval, approved, executed, failed, cancelled)
 
 ### GET /api/deals/:dealId
@@ -365,6 +368,7 @@ cancelled                    failed
 ```
 
 **Transitions:**
+
 - `awaiting_approval → approved` — User/agent must approve before execution
 - `approved → executed` — Execution via MCP adapter
 - `approved → failed` — MCP execution returned error
@@ -508,15 +512,15 @@ All errors follow this format:
 
 ### Common Error Codes
 
-| Code | Meaning |
-|------|---------|
-| `invalid_request` | Malformed request (missing fields, invalid schema) |
-| `idempotency_conflict` | Same idempotency_key sent twice with different data |
-| `not_found` | Resource not found |
+| Code                       | Meaning                                                       |
+| -------------------------- | ------------------------------------------------------------- |
+| `invalid_request`          | Malformed request (missing fields, invalid schema)            |
+| `idempotency_conflict`     | Same idempotency_key sent twice with different data           |
+| `not_found`                | Resource not found                                            |
 | `invalid_state_transition` | Attempted illegal state change (e.g., execute before approve) |
-| `price_exceeded` | Offer price exceeds request max_price_nano |
-| `permission_denied` | Agent not authorized for this operation |
-| `internal_error` | Server error |
+| `price_exceeded`           | Offer price exceeds request max_price_nano                    |
+| `permission_denied`        | Agent not authorized for this operation                       |
+| `internal_error`           | Server error                                                  |
 
 ---
 
@@ -568,7 +572,7 @@ TAK v0.1 includes:
 ✅ Schema versioning  
 ✅ Immutable deal snapshots  
 ✅ Explicit approval gates  
-✅ MCP adapter architecture  
+✅ MCP adapter architecture
 
 Ready for:
 

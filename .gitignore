@@ -1,0 +1,54 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Build
+dist/
+build/
+out/
+
+# Logs
+logs/
+*.log
+
+# Runtime
+tmp/
+temp/
+
+# Demo/assets
+assets/*.mp4
+assets/*.mov
+assets/*.avi
+
+# Git
+.git/
+
+# Test coverage
+coverage/
+.nyc_output/

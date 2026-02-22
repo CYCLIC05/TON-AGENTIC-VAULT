@@ -57,10 +57,38 @@ app.use((req, res, next) => {
 
 // ── Schema version validation ─────────────────────────────
 // ── Inject MCP Adapter ────────────────────────────────────────
-// To use a real TON MCP adapter:
-//   const TonMCPAdapter = require("./adapters/TonMCPAdapter");
-//   app.set("mcpAdapter", new TonMCPAdapter({ rpcUrl: process.env.TON_RPC }));
-app.set("mcpAdapter", new MockMCPAdapter());
+// Choose adapter based on MCP_MODE environment variable
+// Options: "mock" (development) or "ton" (production)
+
+let adapter;
+const mcpMode = process.env.MCP_MODE || "mock";
+
+switch (mcpMode) {
+    case "ton": {
+        // Production: Use TonMCPAdapter for real TON execution
+        try {
+            const TonMCPAdapter = require("./adapters/TonMCPAdapter");
+            adapter = new TonMCPAdapter({
+                rpcUrl: process.env.TON_RPC_URL,
+                apiKey: process.env.TON_API_KEY,
+                walletAddress: process.env.TON_WALLET_ADDRESS,
+            });
+        } catch (err) {
+            console.error("[TAK] Failed to initialize TonMCPAdapter:", err.message);
+            console.error("[TAK] Falling back to MockMCPAdapter");
+            adapter = new MockMCPAdapter();
+        }
+        break;
+    }
+    case "mock":
+    default: {
+        // Development: Use MockMCPAdapter (safe, returns fake receipts)
+        adapter = new MockMCPAdapter();
+        break;
+    }
+}
+
+app.set("mcpAdapter", adapter);
 
 // ── Routes ────────────────────────────────────────────────────
 app.use("/api/agents", agentsRouter);

@@ -1,0 +1,494 @@
+openapi: 3.0.0
+info:
+  title: TAK — TON Agent Kit API
+  version: 0.1.0
+  description: |
+    Developer infrastructure for agent coordination on TON.
+
+    **Key Principles:**
+    - TAK coordinates. TON MCP executes. TAK never holds funds.
+    - All operations are idempotent via `idempotency_key`
+    - Deals are immutable once created
+    - Approval required before execution
+
+  contact:
+    name: TAK Project
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://api.tak.ton
+    description: Production server (example)
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: getHealth
+      tags:
+        - System
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /agents:
+    post:
+      summary: Register an agent
+      operationId: createAgent
+      tags:
+        - Agents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - agent_type
+              properties:
+                idempotency_key:
+                  type: string
+                  description: Unique key for idempotency
+                name:
+                  type: string
+                  description: Agent name
+                  example: price_feed_agent
+                agent_type:
+                  type: string
+                  enum:
+                    - requester
+                    - provider
+                    - orchestrator
+                  description: Agent role
+                metadata:
+                  type: object
+                  description: Optional metadata
+      responses:
+        "201":
+          description: Agent created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Agent"
+        "400":
+          description: Invalid request
+        "409":
+          description: Agent already exists
+
+  /requests:
+    post:
+      summary: Create a service request
+      operationId: createRequest
+      tags:
+        - Requests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agent_id
+                - service_type
+              properties:
+                idempotency_key:
+                  type: string
+                agent_id:
+                  type: string
+                  format: uuid
+                  description: ID of requesting agent
+                service_type:
+                  type: string
+                  enum:
+                    - price_feed
+                    - execution_service
+                    - data_provider
+                    - custom
+                requirements:
+                  type: object
+                  description: Service requirements
+                metadata:
+                  type: object
+      responses:
+        "201":
+          description: Request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Request"
+        "400":
+          description: Validation error
+
+  /offers:
+    post:
+      summary: Submit an offer for a request
+      operationId: submitOffer
+      tags:
+        - Offers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agent_id
+                - request_id
+                - price_nano
+              properties:
+                idempotency_key:
+                  type: string
+                agent_id:
+                  type: string
+                  format: uuid
+                  description: ID of offering agent
+                request_id:
+                  type: string
+                  format: uuid
+                  description: ID of request to offer for
+                price_nano:
+                  type: string
+                  description: Price in nanoTON
+                  example: "500000000"
+                terms:
+                  type: object
+                  description: Service terms
+                metadata:
+                  type: object
+      responses:
+        "201":
+          description: Offer submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+
+  /offers/{offerId}/accept:
+    post:
+      summary: Accept an offer
+      operationId: acceptOffer
+      tags:
+        - Offers
+      parameters:
+        - in: path
+          name: offerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Offer accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+
+  /deals:
+    post:
+      summary: Create a deal from request and offer
+      operationId: createDeal
+      tags:
+        - Deals
+      description: |
+        Lock a service agreement based on a request and offer.
+        Requires both parties to have agreed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agent_id
+                - request_id
+                - offer_id
+              properties:
+                idempotency_key:
+                  type: string
+                agent_id:
+                  type: string
+                  format: uuid
+                  description: ID of deal creator
+                request_id:
+                  type: string
+                  format: uuid
+                offer_id:
+                  type: string
+                  format: uuid
+                service_type:
+                  type: string
+                  enum:
+                    - price_feed
+                    - execution_service
+                    - data_provider
+                    - custom
+                metadata:
+                  type: object
+      responses:
+        "201":
+          description: Deal created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+
+  /deals/{dealId}:
+    get:
+      summary: Get deal details
+      operationId: getDeal
+      tags:
+        - Deals
+      parameters:
+        - in: path
+          name: dealId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Deal found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+        "404":
+          description: Deal not found
+
+  /deals/{dealId}/approve:
+    post:
+      summary: Approve deal execution
+      operationId: approveDeal
+      tags:
+        - Deals
+      description: |
+        Security gate. Both parties must approve before execution.
+        Status changes: awaiting_approval → approved
+      parameters:
+        - in: path
+          name: dealId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agent_id
+              properties:
+                agent_id:
+                  type: string
+                  format: uuid
+                  description: Agent approving the deal
+      responses:
+        "200":
+          description: Deal approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+        "400":
+          description: Cannot approve (wrong state)
+        "404":
+          description: Deal not found
+
+  /deals/{dealId}/execute:
+    post:
+      summary: Execute deal (delegate to MCP)
+      operationId: executeDeal
+      tags:
+        - Deals
+      description: |
+        Delegate execution to MCP adapter (TON blockchain).
+        Status changes: approved → executed or failed
+        Idempotent — returns existing receipt if already executed.
+      parameters:
+        - in: path
+          name: dealId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agent_id
+              properties:
+                agent_id:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: Deal executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecutionResult"
+        "400":
+          description: Cannot execute (wrong state or missing approvals)
+        "404":
+          description: Deal not found
+
+components:
+  schemas:
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        name:
+          type: string
+        agent_type:
+          type: string
+          enum:
+            - requester
+            - provider
+            - orchestrator
+        metadata:
+          type: object
+
+    Request:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        agent_id:
+          type: string
+          format: uuid
+        service_type:
+          type: string
+        status:
+          type: string
+          enum:
+            - open
+            - matched
+            - cancelled
+        requirements:
+          type: object
+        metadata:
+          type: object
+
+    Offer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        price_nano:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - accepted
+            - rejected
+        terms:
+          type: object
+        metadata:
+          type: object
+
+    Deal:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          format: uuid
+        offer_id:
+          type: string
+          format: uuid
+        requester_id:
+          type: string
+          format: uuid
+        provider_id:
+          type: string
+          format: uuid
+        service_type:
+          type: string
+        price_nano:
+          type: string
+        coordination_fee_nano:
+          type: string
+          description: Fee for TAK coordination (currently 0)
+        status:
+          type: string
+          enum:
+            - awaiting_approval
+            - approved
+            - executed
+            - failed
+            - cancelled
+        snapshot:
+          type: object
+          description: Immutable deal snapshot at creation time
+        approvals:
+          type: object
+          description: Approval status from both parties
+        execution_receipt:
+          type: string
+          description: Receipt from MCP execution
+        metadata:
+          type: object
+
+    ExecutionResult:
+      type: object
+      properties:
+        deal_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - executed
+            - failed
+        receipt:
+          type: string
+          description: Execution receipt from MCP/TON
+        timestamp:
+          type: string
+          format: date-time
+        error:
+          type: string
+          description: Error message if execution failed

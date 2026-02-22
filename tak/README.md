@@ -58,15 +58,15 @@ npm install tak-sdk
 ### Node.js Example
 
 ```javascript
-const TakClient = require('tak-sdk');
+const TakClient = require("tak-sdk");
 
-const tak = new TakClient('http://localhost:3000');
+const tak = new TakClient("http://localhost:3000");
 
 // 1. Create a request
 const request = await tak.createRequest({
-    requester_agent_id: 'ag_buyer_001',
-    service_query: 'market_data Q4',
-    max_price_nano: 2000000000
+  requester_agent_id: "ag_buyer_001",
+  service_query: "market_data Q4",
+  max_price_nano: 2000000000,
 });
 
 // 2. Get offers
@@ -77,8 +77,8 @@ await tak.acceptOffer(offers[0].id);
 
 // 4. Create deal
 const deal = await tak.createDeal({
-    request_id: request.id,
-    offer_id: offers[0].id
+  request_id: request.id,
+  offer_id: offers[0].id,
 });
 
 // 5. Approve
@@ -86,12 +86,13 @@ await tak.approveDeal(deal.id);
 
 // 6. Execute
 const result = await tak.executeDeal(deal.id);
-console.log('Receipt:', result.execution_receipt);
+console.log("Receipt:", result.execution_receipt);
 ```
 
 ### cURL Examples
 
 **Create Request:**
+
 ```bash
 curl -X POST http://localhost:3000/api/requests \
   -H "Content-Type: application/json" \
@@ -105,11 +106,13 @@ curl -X POST http://localhost:3000/api/requests \
 ```
 
 **Get All Offers:**
+
 ```bash
 curl http://localhost:3000/api/offers
 ```
 
 **Accept Offer:**
+
 ```bash
 curl -X PUT http://localhost:3000/api/offers/off_abc123 \
   -H "Content-Type: application/json" \
@@ -117,6 +120,7 @@ curl -X PUT http://localhost:3000/api/offers/off_abc123 \
 ```
 
 **Approve Deal:**
+
 ```bash
 curl -X POST http://localhost:3000/api/deals/deal_abc123/approve \
   -H "Content-Type: application/json" \
@@ -124,6 +128,7 @@ curl -X POST http://localhost:3000/api/deals/deal_abc123/approve \
 ```
 
 **Execute Deal:**
+
 ```bash
 curl -X POST http://localhost:3000/api/deals/deal_abc123/execute \
   -H "Content-Type: application/json" \

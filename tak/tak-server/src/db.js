@@ -60,18 +60,19 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS deals (
-    id                TEXT PRIMARY KEY,
-    request_id        TEXT NOT NULL REFERENCES requests(id),
-    offer_id          TEXT NOT NULL REFERENCES offers(id),
-    payer_agent_id    TEXT NOT NULL REFERENCES agents(id),
-    payee_agent_id    TEXT NOT NULL REFERENCES agents(id),
-    amount_nano       INTEGER NOT NULL,          -- copied from offer.price_nano
-    status            TEXT NOT NULL DEFAULT 'awaiting_approval'
-                        CHECK(status IN ('awaiting_approval','approved','executed','failed','cancelled')),
-    execution_receipt TEXT,
-    executed_at       TEXT,
-    approved_at       TEXT,
-    created_at        TEXT NOT NULL DEFAULT (datetime('now'))
+    id                    TEXT PRIMARY KEY,
+    request_id            TEXT NOT NULL REFERENCES requests(id),
+    offer_id              TEXT NOT NULL REFERENCES offers(id),
+    payer_agent_id        TEXT NOT NULL REFERENCES agents(id),
+    payee_agent_id        TEXT NOT NULL REFERENCES agents(id),
+    amount_nano           INTEGER NOT NULL,          -- copied from offer.price_nano
+    coordination_fee_nano INTEGER NOT NULL DEFAULT 0,  -- TAK coordination fee (currently 0)
+    status                TEXT NOT NULL DEFAULT 'awaiting_approval'
+                            CHECK(status IN ('awaiting_approval','approved','executed','failed','cancelled')),
+    execution_receipt     TEXT,
+    executed_at           TEXT,
+    approved_at           TEXT,
+    created_at            TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
   CREATE TABLE IF NOT EXISTS messages (
