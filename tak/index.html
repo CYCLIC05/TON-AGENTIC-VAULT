@@ -9,22 +9,23 @@
         
         /* Color tokens */
         :root {
-            --bg: #07090E;
-            --s1: #0B0D16;
-            --s2: #0F121C;
-            --s3: #141824;
-            --border: #1C2235;
-            --border2: #232B42;
-            --teal: #00D4B8;
-            --tealDim: rgba(0,212,184,0.1);
-            --green: #10F07A;
-            --greenDim: rgba(16,240,122,0.1);
-            --amber: #F59E0B;
-            --amberDim: rgba(245,158,11,0.1);
-            --txt: #E2ECF8;
-            --txt2: #6B7FA0;
-            --txt3: #2E3A50;
+            --bg: #0F1419;
+            --s1: #131820;
+            --s2: #1A202C;
+            --s3: #242E3E;
+            --border: #2D3A52;
+            --border2: #3B4A62;
+            --accent: #3B82F6;
+            --accentDim: rgba(59,130,246,0.1);
+            --accentBright: #60A5FA;
+            --green: #10B981;
+            --greenDim: rgba(16,185,129,0.1);
             --purple: #8B5CF6;
+            --purpleDim: rgba(139,92,246,0.1);
+            --txt: #F0F4F8;
+            --txt2: #9CA3AF;
+            --txt3: #4B5563;
+            --success: #10B981;
         }
         
         body {
@@ -78,7 +79,7 @@
         }
         
         .header-title .dot {
-            color: var(--teal);
+            color: var(--accent);
         }
         
         .header-subtitle {
@@ -108,14 +109,14 @@
             padding: 11px 24px;
             border-radius: 9px;
             border: none;
-            background: linear-gradient(135deg, var(--teal), #00A896);
-            color: #000;
+            background: linear-gradient(135deg, var(--accent), #2563EB);
+            color: #fff;
             font-family: monospace;
             font-size: 13px;
             font-weight: 700;
             cursor: pointer;
             white-space: nowrap;
-            box-shadow: 0 0 20px rgba(0, 212, 184, 0.25);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
             transition: all 0.2s;
         }
         
@@ -191,15 +192,15 @@
         }
         
         .timeline-item.active .timeline-circle {
-            border-color: var(--teal);
-            color: var(--teal);
-            box-shadow: 0 0 14px rgba(0, 212, 184, 0.4);
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 14px rgba(59, 130, 246, 0.5);
         }
         
         .timeline-item.done .timeline-circle {
-            border-color: var(--teal);
-            background: rgba(0, 212, 184, 0.1);
-            color: var(--teal);
+            border-color: var(--accent);
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent);
         }
         
         .timeline-label-item {
@@ -212,7 +213,7 @@
         }
         
         .timeline-item.done .timeline-label-item {
-            color: var(--teal);
+            color: var(--accent);
         }
         
         /* Main content */
@@ -262,7 +263,7 @@
         
         .card-title {
             font-size: 9px;
-            color: var(--teal);
+            color: var(--accent);
             letter-spacing: 0.12em;
             margin-bottom: 6px;
         }
@@ -296,14 +297,14 @@
             padding: 2px 8px;
             border-radius: 4px;
             border: 1px solid;
-            background: rgba(0, 212, 184, 0.1);
-            color: var(--teal);
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent);
         }
         
         .code-content {
             padding: 14px;
             font-size: 11px;
-            color: var(--teal);
+            color: var(--accent);
             font-family: monospace;
             white-space: pre-wrap;
             word-break: break-all;
@@ -323,7 +324,7 @@
         }
         
         .copy-btn:hover {
-            color: var(--teal);
+            color: var(--accent);
         }
         
         .copy-btn.copied {
@@ -338,8 +339,8 @@
             font-weight: 700;
             margin-top: 4px;
             border: 1px solid;
-            background: rgba(0, 212, 184, 0.1);
-            color: var(--teal);
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent);
         }
         
         .status-item {
@@ -358,7 +359,7 @@
         .status-value {
             font-family: monospace;
             font-weight: 600;
-            color: var(--teal);
+            color: var(--accent);
         }
         
         .empty-state {
@@ -396,14 +397,14 @@
         
         .snapshot-title {
             font-size: 9px;
-            color: var(--green);
+            color: var(--success);
             letter-spacing: 0.12em;
         }
         
         .lock-badge {
             font-size: 9px;
-            color: var(--green);
-            border: 1px solid rgba(16, 240, 122, 0.4);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.4);
             border-radius: 4px;
             padding: 2px 8px;
             background: rgba(16, 240, 122, 0.1);
@@ -436,8 +437,8 @@
         }
         
         .approval-gate {
-            background: rgba(245, 158, 11, 0.05);
-            border: 2px solid rgba(245, 158, 11, 0.3);
+            background: rgba(139, 92, 246, 0.05);
+            border: 2px solid rgba(139, 92, 246, 0.3);
             border-radius: 12px;
             padding: 16px;
         }
@@ -456,7 +457,7 @@
         .gate-title {
             font-size: 11px;
             font-weight: 700;
-            color: var(--amber);
+            color: var(--purple);
         }
         
         .gate-desc {
@@ -471,8 +472,8 @@
             align-items: center;
             gap: 8px;
             padding: 9px 12px;
-            background: rgba(16, 240, 122, 0.1);
-            border: 1px solid rgba(16, 240, 122, 0.2);
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
             border-radius: 8px;
         }
         
@@ -482,7 +483,7 @@
         
         .approval-text {
             font-size: 11px;
-            color: var(--green);
+            color: var(--success);
             font-weight: 700;
         }
         
@@ -493,15 +494,15 @@
         }
         
         .execution-result {
-            background: var(--tealDim);
-            border: 1px solid rgba(0, 212, 184, 0.25);
+            background: var(--accentDim);
+            border: 1px solid rgba(59, 130, 246, 0.25);
             border-radius: 12px;
             padding: 16px;
         }
         
         .result-title {
             font-size: 9px;
-            color: var(--teal);
+            color: var(--accent);
             letter-spacing: 0.12em;
             margin-bottom: 10px;
         }
@@ -509,11 +510,11 @@
         .receipt-hash {
             font-family: monospace;
             font-size: 13px;
-            color: var(--teal);
-            background: #020F0D;
+            color: var(--accent);
+            background: #0A1620;
             border-radius: 8px;
             padding: 10px 14px;
-            border: 1px solid rgba(0, 212, 184, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.2);
             margin-bottom: 10px;
             display: flex;
             align-items: center;
@@ -538,7 +539,7 @@
         
         .arch-item {
             background: var(--s2);
-            border: 1px solid rgba(0, 212, 184, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.2);
             border-radius: 9px;
             padding: 10px 12px;
             margin-bottom: 0;
@@ -547,7 +548,7 @@
         .arch-name {
             font-size: 11px;
             font-weight: 700;
-            color: var(--teal);
+            color: var(--accent);
         }
         
         .arch-sub {
@@ -588,7 +589,7 @@
         
         .api-method {
             font-size: 9px;
-            color: var(--teal);
+            color: var(--accent);
             font-weight: 700;
             min-width: 36px;
             font-family: monospace;
@@ -604,15 +605,15 @@
         .completion-message {
             margin: 0 32px 32px;
             border-radius: 14px;
-            background: linear-gradient(135deg, var(--tealDim), var(--greenDim));
-            border: 1px solid rgba(0, 212, 184, 0.25);
+            background: linear-gradient(135deg, var(--accentDim), var(--greenDim));
+            border: 1px solid rgba(59, 130, 246, 0.25);
             padding: 20px 24px;
             animation: fadeIn 0.5s ease;
         }
         
         .completion-label {
             font-size: 9px;
-            color: var(--teal);
+            color: var(--accent);
             letter-spacing: 0.14em;
             margin-bottom: 10px;
         }
@@ -624,14 +625,14 @@
         }
         
         .completion-text span {
-            color: var(--teal);
+            color: var(--accent);
         }
         
         .security-statement {
             font-size: 10px;
             color: var(--txt3);
-            background: rgba(245, 158, 11, 0.05);
-            border-left: 2px solid var(--amber);
+            background: rgba(139, 92, 246, 0.05);
+            border-left: 2px solid var(--purple);
             padding: 8px 12px;
             margin-bottom: 16px;
             border-radius: 4px;
@@ -640,8 +641,8 @@
         .pmf-statement {
             font-size: 10px;
             color: var(--txt2);
-            background: rgba(0, 212, 184, 0.05);
-            border-left: 2px solid var(--teal);
+            background: rgba(59, 130, 246, 0.05);
+            border-left: 2px solid var(--accent);
             padding: 8px 12px;
             margin-bottom: 16px;
             border-radius: 4px;
@@ -667,7 +668,7 @@
         .quickstart-content {
             padding: 12px 14px;
             font-size: 9px;
-            color: var(--teal);
+            color: var(--accent);
             font-family: monospace;
             line-height: 1.6;
         }
@@ -700,7 +701,7 @@
             padding: 6px 8px;
             background: var(--s3);
             border: 1px solid var(--border2);
-            color: var(--teal);
+            color: var(--accent);
             font-family: monospace;
             font-size: 10px;
             border-radius: 4px;
@@ -728,9 +729,9 @@
         .deal-export-btn {
             padding: 8px 12px;
             border-radius: 6px;
-            border: 1px solid var(--teal);
-            background: rgba(0, 212, 184, 0.1);
-            color: var(--teal);
+            border: 1px solid var(--accent);
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent);
             font-family: monospace;
             font-size: 10px;
             cursor: pointer;
@@ -740,7 +741,7 @@
         }
         
         .deal-export-btn:hover {
-            background: rgba(0, 212, 184, 0.2);
+            background: rgba(59, 130, 246, 0.2);
         }
 
         /* API Request Mode */
@@ -783,8 +784,8 @@
 
         .config-input:focus {
             outline: none;
-            border-color: var(--teal);
-            box-shadow: 0 0 0 2px rgba(0,212,184,0.1);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
         }
 
         .request-section {
@@ -828,7 +829,7 @@
         }
 
         .method-btn:hover:not(.active) {
-            border-color: var(--teal);
+            border-color: var(--accent);
         }
 
         .payload-editor {
@@ -848,7 +849,7 @@
 
         .payload-editor:focus {
             outline: none;
-            border-color: var(--teal);
+            border-color: var(--accent);
         }
 
         .send-btn {
@@ -1409,7 +1410,7 @@ const result = await tak.executeDeal(deal.id);
             let html = '';
             liveStateTemplate.forEach(item => {
                 const showItem = currentStage >= item.stage;
-                const color = showItem ? 'var(--teal)' : 'var(--txt3)';
+                const color = showItem ? 'var(--accent)' : 'var(--txt3)';
                 const val = showItem ? item.val : '—';
                 html += `
                     <div class="status-item">
