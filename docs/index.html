@@ -67,7 +67,7 @@
             padding: 18px 32px;
             display: flex;
             align-items: center;
-            gap: 20;
+            gap: 20px;
             flex-wrap: wrap;
         }
         
@@ -118,6 +118,8 @@
             white-space: nowrap;
             box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
             transition: all 0.2s;
+            min-height: 44px;
+            min-width: 44px;
         }
         
         .btn-run:disabled {
@@ -321,6 +323,10 @@
             font-size: 10px;
             cursor: pointer;
             transition: color 0.2s;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .copy-btn:hover {
@@ -863,6 +869,10 @@
             transition: all 0.2s;
             white-space: nowrap;
             margin-top: 8px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .send-btn:hover:not(:disabled) {
@@ -951,6 +961,604 @@
         .delivery-value {
             color: var(--green);
             font-weight: 600;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+                min-height: auto;
+            }
+
+            .panel {
+                width: 100% !important;
+                flex-shrink: 1;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .panel-center, .panel-right {
+                width: 100% !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 12px 16px;
+            }
+
+            .header-title {
+                font-size: 20px;
+            }
+
+            .header-subtitle {
+                margin-left: 4px;
+                font-size: 13px;
+            }
+
+            .header-controls {
+                width: 100%;
+                gap: 6px;
+            }
+
+            .btn-run {
+                flex: 1;
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+
+            .btn-reset {
+                padding: 10px 12px;
+                font-size: 11px;
+            }
+
+            .timeline-section {
+                padding: 16px 12px 0;
+            }
+
+            .timeline {
+                gap: 0;
+                overflow-x: auto;
+                padding-bottom: 10px;
+            }
+
+            .timeline-item {
+                min-width: 60px;
+                flex: 0 0 auto;
+            }
+
+            .timeline-circle {
+                width: 26px;
+                height: 26px;
+                font-size: 10px;
+            }
+
+            .timeline-label-item {
+                font-size: 8px;
+                margin-top: 4px;
+            }
+
+            .panel {
+                padding: 16px 14px;
+                gap: 12px;
+            }
+
+            .panel-title {
+                font-size: 8px;
+                margin-bottom: 8px;
+            }
+
+            .card {
+                padding: 12px 14px;
+            }
+
+            .card-title {
+                font-size: 8px;
+                margin-bottom: 4px;
+            }
+
+            .card-desc {
+                font-size: 11px;
+                line-height: 1.5;
+            }
+
+            .code-block {
+                margin-top: 8px;
+            }
+
+            .code-header {
+                padding: 6px 10px;
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+
+            .code-content {
+                padding: 10px;
+                font-size: 10px;
+                line-height: 1.5;
+                max-height: 250px;
+                overflow-y: auto;
+            }
+
+            .status-item {
+                font-size: 9px;
+                padding: 4px 0;
+            }
+
+            .status-badge {
+                font-size: 10px;
+                padding: 2px 8px;
+            }
+
+            .deal-snapshot {
+                padding: 12px;
+            }
+
+            .snapshot-grid {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+
+            .snapshot-item {
+                padding: 6px 8px;
+            }
+
+            .snapshot-key {
+                font-size: 7px;
+            }
+
+            .snapshot-value {
+                font-size: 9px;
+            }
+
+            .approval-gate {
+                padding: 12px;
+            }
+
+            .gate-title {
+                font-size: 10px;
+            }
+
+            .gate-desc {
+                font-size: 10px;
+            }
+
+            .approval-confirm {
+                padding: 8px 10px;
+                gap: 6px;
+            }
+
+            .approval-check {
+                font-size: 11px;
+            }
+
+            .approval-text {
+                font-size: 10px;
+            }
+
+            .approval-time {
+                font-size: 9px;
+            }
+
+            .execution-result {
+                padding: 12px;
+            }
+
+            .result-title {
+                font-size: 8px;
+                margin-bottom: 8px;
+            }
+
+            .receipt-hash {
+                font-size: 11px;
+                padding: 8px 10px;
+                margin-bottom: 8px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+
+            .copy-btn {
+                font-size: 9px;
+                padding: 2px 6px;
+                align-self: flex-end;
+            }
+
+            .result-desc {
+                font-size: 9px;
+            }
+
+            .delivery-confirmation {
+                padding: 10px;
+                margin-top: 10px;
+            }
+
+            .delivery-title {
+                font-size: 8px;
+                margin-bottom: 6px;
+            }
+
+            .delivery-item {
+                padding: 3px 0;
+                font-size: 9px;
+            }
+
+            .deal-export-btn {
+                padding: 6px 10px;
+                font-size: 9px;
+                margin-top: 6px;
+            }
+
+            .architecture {
+                gap: 4px;
+            }
+
+            .arch-item {
+                padding: 8px 10px;
+            }
+
+            .arch-name {
+                font-size: 10px;
+            }
+
+            .arch-sub {
+                font-size: 8px;
+                margin-top: 2px;
+            }
+
+            .arch-arrow {
+                height: 16px;
+                font-size: 12px;
+            }
+
+            .api-call-list {
+                max-height: 200px;
+                overflow-y: auto;
+            }
+
+            .api-call-item {
+                padding: 6px 8px;
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+
+            .api-method {
+                font-size: 8px;
+                min-width: 32px;
+            }
+
+            .api-path {
+                font-size: 9px;
+                min-width: 150px;
+            }
+
+            .security-statement, .pmf-statement {
+                font-size: 9px;
+                padding: 6px 10px;
+                margin-bottom: 12px;
+            }
+
+            .quickstart-block {
+                margin-bottom: 12px;
+            }
+
+            .quickstart-title {
+                font-size: 8px;
+                padding: 10px 10px;
+            }
+
+            .quickstart-content {
+                padding: 10px;
+                font-size: 8px;
+                line-height: 1.5;
+                max-height: 200px;
+                overflow-y: auto;
+            }
+
+            .quickstart-label {
+                font-size: 7px;
+                margin-top: 6px;
+                padding-top: 6px;
+            }
+
+            .adapter-selector {
+                padding: 10px;
+                margin-bottom: 12px;
+            }
+
+            .adapter-label {
+                font-size: 8px;
+                margin-bottom: 6px;
+            }
+
+            .adapter-select {
+                padding: 6px 6px;
+                font-size: 9px;
+                margin-bottom: 6px;
+            }
+
+            .adapter-status {
+                font-size: 8px;
+                line-height: 1.4;
+            }
+
+            .state-machine-ref {
+                padding: 8px 10px;
+                margin-top: 12px;
+                font-size: 8px;
+                line-height: 1.4;
+            }
+
+            .api-config {
+                padding: 10px;
+                margin-bottom: 12px;
+            }
+
+            .section-label {
+                font-size: 10px;
+                margin-bottom: 6px;
+            }
+
+            .config-group {
+                gap: 6px;
+                margin-bottom: 6px;
+            }
+
+            .config-label {
+                font-size: 10px;
+                min-width: 60px;
+            }
+
+            .config-input {
+                padding: 5px 8px;
+                font-size: 11px;
+                min-width: 150px;
+            }
+
+            .request-section {
+                padding: 10px;
+                margin-bottom: 10px;
+            }
+
+            .method-btn {
+                padding: 5px 10px;
+                font-size: 10px;
+            }
+
+            .payload-editor {
+                padding: 8px;
+                font-size: 10px;
+                min-height: 60px;
+                max-height: 150px;
+            }
+
+            .send-btn {
+                padding: 8px 12px;
+                font-size: 11px;
+                margin-top: 6px;
+            }
+
+            .api-response {
+                margin-top: 10px;
+            }
+
+            .response-header {
+                padding: 6px 10px;
+                font-size: 10px;
+            }
+
+            .response-body {
+                padding: 10px;
+                font-size: 9px;
+                max-height: 200px;
+            }
+
+            .completion-message {
+                margin: 16px 16px;
+                padding: 16px;
+            }
+
+            .completion-label {
+                font-size: 8px;
+                margin-bottom: 8px;
+            }
+
+            .completion-text {
+                font-size: 12px;
+                line-height: 1.6;
+            }
+
+            .empty-state {
+                gap: 12px;
+            }
+
+            .empty-icon {
+                font-size: 28px;
+            }
+
+            .empty-text {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                font-size: 12px;
+            }
+
+            .header {
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .header-left {
+                width: 100%;
+            }
+
+            .header-controls {
+                width: 100%;
+            }
+
+            .btn-run {
+                min-height: 36px;
+            }
+
+            .header-title {
+                font-size: 16px;
+            }
+
+            .header-subtitle {
+                font-size: 12px;
+            }
+
+            .timeline-section {
+                padding: 12px 10px 0;
+                border-bottom: none;
+            }
+
+            .timeline-label {
+                font-size: 7px;
+                margin-bottom: 10px;
+            }
+
+            .timeline {
+                gap: 0;
+                padding-bottom: 8px;
+            }
+
+            .timeline-item {
+                min-width: 50px;
+            }
+
+            .timeline-circle {
+                width: 24px;
+                height: 24px;
+                font-size: 9px;
+            }
+
+            .timeline-connector {
+                top: 12px;
+                height: 2px;
+            }
+
+            .timeline-label-item {
+                font-size: 7px;
+                margin-top: 3px;
+            }
+
+            .main-container {
+                gap: 0;
+                min-height: auto;
+            }
+
+            .panel {
+                padding: 12px 10px;
+                gap: 10px;
+                border-right: none;
+            }
+
+            .panel-title {
+                font-size: 7px;
+                margin-bottom: 6px;
+            }
+
+            .card {
+                padding: 10px 12px;
+            }
+
+            .card-title {
+                font-size: 7px;
+            }
+
+            .card-desc {
+                font-size: 10px;
+                line-height: 1.4;
+            }
+
+            .code-header {
+                padding: 5px 8px;
+                font-size: 9px;
+            }
+
+            .method-badge {
+                font-size: 8px;
+                padding: 2px 6px;
+            }
+
+            .code-content {
+                padding: 8px;
+                font-size: 9px;
+                max-height: 200px;
+            }
+
+            .status-item {
+                font-size: 8px;
+                padding: 3px 0;
+            }
+
+            .architecture {
+                gap: 2px;
+            }
+
+            .arch-item {
+                padding: 8px 10px;
+            }
+
+            .arch-name {
+                font-size: 9px;
+            }
+
+            .arch-sub {
+                font-size: 7px;
+            }
+
+            .api-call-item {
+                padding: 5px 8px;
+                font-size: 8px;
+            }
+
+            .api-method {
+                font-size: 7px;
+                min-width: 28px;
+            }
+
+            .api-path {
+                font-size: 8px;
+                min-width: 100px;
+            }
+
+            .security-statement, .pmf-statement {
+                font-size: 8px;
+                padding: 6px 8px;
+            }
+
+            .quickstart-content {
+                font-size: 7px;
+            }
+
+            .config-input {
+                min-width: 100px;
+            }
+
+            .config-label {
+                min-width: 50px;
+                font-size: 9px;
+            }
+
+            .completion-text {
+                font-size: 11px;
+            }
+
+            .empty-icon {
+                font-size: 24px;
+            }
+
+            .empty-text {
+                font-size: 11px;
+            }
         }
     </style>
 </head>
