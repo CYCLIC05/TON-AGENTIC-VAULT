@@ -16,6 +16,35 @@ router.get("/", (req, res) => {
     res.json({ services, total: services.length });
 });
 
+// ── GET /api/services/search ──────────────────────────────────
+router.get("/search", (req, res) => {
+    const { tag, max_price } = req.query;
+
+    let query = `
+      SELECT s.*, a.name AS agent_name 
+      FROM services s 
+      JOIN agents a ON a.id = s.agent_id 
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (tag) {
+        query += ` AND (s.tags LIKE ? OR s.service_name LIKE ? OR s.description LIKE ?)`;
+        const paramTag = `%${tag}%`;
+        params.push(paramTag, paramTag, paramTag);
+    }
+
+    if (max_price) {
+        query += ` AND s.base_price_nano <= ?`;
+        params.push(parseInt(max_price, 10));
+    }
+
+    query += ` ORDER BY s.created_at DESC`;
+
+    const services = db.prepare(query).all(...params);
+    res.json({ services, total: services.length });
+});
+
 // ── GET /api/services/:id ──────────────────────────────────────
 router.get("/:id", (req, res) => {
     const svc = db.prepare(

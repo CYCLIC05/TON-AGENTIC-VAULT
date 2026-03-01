@@ -18,6 +18,7 @@ const router = express.Router();
 // ── GET /api/deals ────────────────────────────────────────────
 router.get("/", (req, res) => {
     const deals = db.prepare("SELECT * FROM deals ORDER BY created_at DESC").all();
+    deals.forEach(d => { if (d.execution_payload) d.execution_payload = JSON.parse(d.execution_payload); });
     res.json({ deals, total: deals.length });
 });
 
@@ -25,14 +26,22 @@ router.get("/", (req, res) => {
 router.get("/:id", (req, res) => {
     const deal = db.prepare("SELECT * FROM deals WHERE id=?").get(req.params.id);
     if (!deal) return res.status(404).json({ error: "Deal not found" });
+    if (deal.execution_payload) deal.execution_payload = JSON.parse(deal.execution_payload);
     res.json(deal);
 });
 
 // ── POST /api/deals ── (create from accepted offer) ───────────
 router.post("/", (req, res) => {
-    const { request_id, offer_id } = req.body;
+    const { request_id, offer_id, execution_type, execution_payload } = req.body;
     if (!request_id || !offer_id)
         return res.status(400).json({ error: "request_id and offer_id are required" });
+
+    if (execution_type) {
+        const allowedTypes = ['ton_transfer', 'jetton_transfer', 'nft_transfer', 'contract_call'];
+        if (!allowedTypes.includes(execution_type)) {
+            return res.status(400).json({ error: `Invalid execution_type. Allowed: ${allowedTypes.join(", ")}` });
+        }
+    }
 
     const offer = db.prepare("SELECT * FROM offers WHERE id=?").get(offer_id);
     if (!offer) return res.status(404).json({ error: "Offer not found" });
@@ -51,11 +60,17 @@ router.post("/", (req, res) => {
     const id = `deal_${uuidv4().replace(/-/g, "").slice(0, 12)}`;
     db.prepare(
         `INSERT INTO deals
-      (id, request_id, offer_id, payer_agent_id, payee_agent_id, amount_nano)
-     VALUES (?,?,?,?,?,?)`
-    ).run(id, request_id, offer_id, request.requester_agent_id, offer.provider_agent_id, offer.price_nano);
+      (id, request_id, offer_id, payer_agent_id, payee_agent_id, amount_nano, execution_type, execution_payload)
+     VALUES (?,?,?,?,?,?,?,?)`
+    ).run(id, request_id, offer_id, request.requester_agent_id, offer.provider_agent_id, offer.price_nano, execution_type || null, execution_payload ? JSON.stringify(execution_payload) : null);
+
+    const eventId = `evt_${uuidv4().replace(/-/g, "").slice(0, 12)}`;
+    db.prepare(
+        `INSERT INTO deal_events (id, deal_id, event_type, old_status, new_status) VALUES (?,?,?,?,?)`
+    ).run(eventId, id, 'deal_created', null, 'awaiting_approval');
 
     const deal = db.prepare("SELECT * FROM deals WHERE id=?").get(id);
+    if (deal.execution_payload) deal.execution_payload = JSON.parse(deal.execution_payload);
     res.status(201).json(deal);
 });
 
@@ -75,7 +90,13 @@ router.post("/:id/approve", (req, res) => {
         "UPDATE deals SET status='approved', approved_at=? WHERE id=?"
     ).run(now, deal.id);
 
+    const eventId = `evt_${uuidv4().replace(/-/g, "").slice(0, 12)}`;
+    db.prepare(
+        `INSERT INTO deal_events (id, deal_id, event_type, old_status, new_status) VALUES (?,?,?,?,?)`
+    ).run(eventId, deal.id, 'status_changed', 'awaiting_approval', 'approved');
+
     const updated = db.prepare("SELECT * FROM deals WHERE id=?").get(deal.id);
+    if (updated.execution_payload) updated.execution_payload = JSON.parse(updated.execution_payload);
     res.json({
         ...updated,
         message: "Deal approved. Ready for execution via MCPAdapter.",
@@ -96,14 +117,21 @@ router.post("/:id/execute", async (req, res) => {
     const adapter = req.app.get("mcpAdapter");
 
     try {
-        const receipt = await adapter.execute_payment(deal);
+        const payload = deal.execution_payload ? JSON.parse(deal.execution_payload) : null;
+        const receipt = await adapter.execute_payment(deal, deal.execution_type, payload);
         const now = new Date().toISOString();
 
         db.prepare(
             "UPDATE deals SET status='executed', execution_receipt=?, executed_at=? WHERE id=?"
-        ).run(receipt, now, deal.id);
+        ).run(JSON.stringify(receipt), now, deal.id);
+
+        const eventId = `evt_${uuidv4().replace(/-/g, "").slice(0, 12)}`;
+        db.prepare(
+            `INSERT INTO deal_events (id, deal_id, event_type, old_status, new_status, metadata) VALUES (?,?,?,?,?,?)`
+        ).run(eventId, deal.id, 'status_changed', 'approved', 'executed', JSON.stringify({ receipt: receipt.receipt }));
 
         const updated = db.prepare("SELECT * FROM deals WHERE id=?").get(deal.id);
+        if (updated.execution_payload) updated.execution_payload = JSON.parse(updated.execution_payload);
         res.json({
             ...updated,
             adapter: adapter.constructor.name,
@@ -111,12 +139,44 @@ router.post("/:id/execute", async (req, res) => {
         });
     } catch (err) {
         db.prepare("UPDATE deals SET status='failed' WHERE id=?").run(deal.id);
+        const eventId = `evt_${uuidv4().replace(/-/g, "").slice(0, 12)}`;
+        db.prepare(
+            `INSERT INTO deal_events (id, deal_id, event_type, old_status, new_status, metadata) VALUES (?,?,?,?,?,?)`
+        ).run(eventId, deal.id, 'status_changed', 'approved', 'failed', JSON.stringify({ error: err.message }));
+
         res.status(500).json({
             error: "MCP execution failed",
             detail: err.message,
             deal_status: "failed",
         });
     }
+});
+
+// ── POST /api/deals/:id/reject ────────────────────────────────
+router.post("/:id/reject", (req, res) => {
+    const deal = db.prepare("SELECT * FROM deals WHERE id=?").get(req.params.id);
+    if (!deal) return res.status(404).json({ error: "Deal not found" });
+
+    if (deal.status !== "awaiting_approval")
+        return res.status(409).json({
+            error: `Cannot reject deal with status '${deal.status}'. Must be 'awaiting_approval'.`,
+            current_status: deal.status,
+        });
+
+    const now = new Date().toISOString();
+    // Use cancelled state for rejected to pass SQLite constraints, but record rejected_at
+    db.prepare(
+        "UPDATE deals SET status='cancelled', rejected_at=? WHERE id=?"
+    ).run(now, deal.id);
+
+    const eventId = `evt_${uuidv4().replace(/-/g, "").slice(0, 12)}`;
+    db.prepare(
+        `INSERT INTO deal_events (id, deal_id, event_type, old_status, new_status) VALUES (?,?,?,?,?)`
+    ).run(eventId, deal.id, 'status_changed', 'awaiting_approval', 'cancelled');
+
+    const updated = db.prepare("SELECT * FROM deals WHERE id=?").get(deal.id);
+    if (updated.execution_payload) updated.execution_payload = JSON.parse(updated.execution_payload);
+    res.json(updated);
 });
 
 // ── PUT /api/deals/:id ── (cancel only, from awaiting_approval)
@@ -131,7 +191,15 @@ router.put("/:id", (req, res) => {
         return res.status(409).json({ error: `Cannot cancel deal with status '${deal.status}'` });
 
     db.prepare("UPDATE deals SET status='cancelled' WHERE id=?").run(deal.id);
-    res.json(db.prepare("SELECT * FROM deals WHERE id=?").get(deal.id));
+
+    const eventId = `evt_${uuidv4().replace(/-/g, "").slice(0, 12)}`;
+    db.prepare(
+        `INSERT INTO deal_events (id, deal_id, event_type, old_status, new_status) VALUES (?,?,?,?,?)`
+    ).run(eventId, deal.id, 'status_changed', 'awaiting_approval', 'cancelled');
+
+    const updated = db.prepare("SELECT * FROM deals WHERE id=?").get(deal.id);
+    if (updated.execution_payload) updated.execution_payload = JSON.parse(updated.execution_payload);
+    res.json(updated);
 });
 
 // ── DELETE /api/deals/:id ──────────────────────────────────────

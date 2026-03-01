@@ -21,6 +21,8 @@ const requestsRouter = require("./routes/requests");
 const offersRouter = require("./routes/offers");
 const dealsRouter = require("./routes/deals");
 const messagesRouter = require("./routes/messages");
+const requestId = require("./middleware/requestId");
+const { errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +30,7 @@ const PORT = process.env.PORT || 3000;
 // ── Middleware ────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
+app.use(requestId);
 // ── Idempotency middleware ────────────────────────────────
 // Store idempotency keys in memory (in production, use Redis)
 const idempotencyStore = new Map();
@@ -99,6 +102,15 @@ app.use("/api/deals", dealsRouter);
 app.use("/api/messages", messagesRouter);
 
 // ── Health / info endpoint ────────────────────────────────────
+app.get("/health", (req, res) => {
+    res.json({
+        status: "ok",
+        uptime: process.uptime(),
+        version: "0.1.0",
+        adapter: app.get("mcpAdapter").constructor.name,
+    });
+});
+
 app.get("/", (req, res) => {
     res.json({
         name: "TAK — TON Agent Kit",
@@ -131,15 +143,13 @@ app.get("/", (req, res) => {
 });
 
 // ── 404 handler ───────────────────────────────────────────────
-app.use((req, res) => {
-    res.status(404).json({ error: `Route ${req.method} ${req.path} not found` });
+app.use((req, res, next) => {
+    const { NotFoundError } = require("./middleware/errorHandler");
+    next(new NotFoundError(`Route ${req.method} ${req.path} not found`));
 });
 
 // ── Error handler ─────────────────────────────────────────────
-app.use((err, req, res, next) => {
-    console.error("[TAK Error]", err);
-    res.status(500).json({ error: "Internal server error", detail: err.message });
-});
+app.use(errorHandler);
 
 // ── Boot ──────────────────────────────────────────────────────
 app.listen(PORT, () => {

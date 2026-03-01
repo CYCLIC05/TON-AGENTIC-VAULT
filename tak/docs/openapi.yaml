@@ -11,24 +11,69 @@ info:
     - Deals are immutable once created
     - Approval required before execution
 
-  contact:
-    name: TAK Project
-  license:
-    name: MIT
-
 servers:
   - url: http://localhost:3000
     description: Local development server
   - url: https://api.tak.ton
-    description: Production server (example)
+    description: Production server
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error_code:
+          type: string
+          example: NOT_FOUND
+        message:
+          type: string
+        trace_id:
+          type: string
+          example: trace_1a2b3c4d5e
+    
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        endpoint_url:
+          type: string
+        public_key:
+          type: string
+        telegram_handle:
+          type: string
+        verified_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, disabled]
+        created_at:
+          type: string
+          format: date-time
+
+  responses:
+    Error:
+      description: General error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
 
 paths:
   /health:
     get:
       summary: Health check
       operationId: getHealth
-      tags:
-        - System
+      tags: [System]
       responses:
         "200":
           description: Server is healthy
@@ -40,455 +85,525 @@ paths:
                   status:
                     type: string
                     example: ok
+                  uptime:
+                    type: number
+                  version:
+                    type: string
+                  adapter:
+                    type: string
 
-  /agents:
+  /api/agents:
+    get:
+      summary: List all agents
+      tags: [Agents]
+      responses:
+        "200":
+          description: OK
     post:
       summary: Register an agent
-      operationId: createAgent
-      tags:
-        - Agents
+      tags: [Agents]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - name
-                - agent_type
+              required: [name]
               properties:
-                idempotency_key:
-                  type: string
-                  description: Unique key for idempotency
                 name:
                   type: string
-                  description: Agent name
-                  example: price_feed_agent
-                agent_type:
+                description:
                   type: string
-                  enum:
-                    - requester
-                    - provider
-                    - orchestrator
-                  description: Agent role
-                metadata:
-                  type: object
-                  description: Optional metadata
+                capabilities:
+                  type: array
+                  items:
+                    type: string
+                endpoint_url:
+                  type: string
+                public_key:
+                  type: string
+                telegram_handle:
+                  type: string
       responses:
         "201":
-          description: Agent created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Agent"
+          description: Created
         "400":
-          description: Invalid request
+          $ref: '#/components/responses/Error'
         "409":
-          description: Agent already exists
+          $ref: '#/components/responses/Error'
 
-  /requests:
-    post:
-      summary: Create a service request
-      operationId: createRequest
-      tags:
-        - Requests
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - agent_id
-                - service_type
-              properties:
-                idempotency_key:
-                  type: string
-                agent_id:
-                  type: string
-                  format: uuid
-                  description: ID of requesting agent
-                service_type:
-                  type: string
-                  enum:
-                    - price_feed
-                    - execution_service
-                    - data_provider
-                    - custom
-                requirements:
-                  type: object
-                  description: Service requirements
-                metadata:
-                  type: object
-      responses:
-        "201":
-          description: Request created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Request"
-        "400":
-          description: Validation error
-
-  /offers:
-    post:
-      summary: Submit an offer for a request
-      operationId: submitOffer
-      tags:
-        - Offers
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - agent_id
-                - request_id
-                - price_nano
-              properties:
-                idempotency_key:
-                  type: string
-                agent_id:
-                  type: string
-                  format: uuid
-                  description: ID of offering agent
-                request_id:
-                  type: string
-                  format: uuid
-                  description: ID of request to offer for
-                price_nano:
-                  type: string
-                  description: Price in nanoTON
-                  example: "500000000"
-                terms:
-                  type: object
-                  description: Service terms
-                metadata:
-                  type: object
-      responses:
-        "201":
-          description: Offer submitted
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Offer"
-
-  /offers/{offerId}/accept:
-    post:
-      summary: Accept an offer
-      operationId: acceptOffer
-      tags:
-        - Offers
+  /api/agents/search:
+    get:
+      summary: Search agents by capability
+      tags: [Agents]
       parameters:
-        - in: path
-          name: offerId
+        - in: query
+          name: capability
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         "200":
-          description: Offer accepted
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Offer"
+          description: Found agents
 
-  /deals:
-    post:
-      summary: Create a deal from request and offer
-      operationId: createDeal
-      tags:
-        - Deals
-      description: |
-        Lock a service agreement based on a request and offer.
-        Requires both parties to have agreed.
+  /api/agents/{id}:
+    get:
+      summary: Get agent
+      tags: [Agents]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "404":
+          $ref: '#/components/responses/Error'
+    put:
+      summary: Update agent
+      tags: [Agents]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - agent_id
-                - request_id
-                - offer_id
+      responses:
+        "200":
+          description: Updated
+        "404":
+          $ref: '#/components/responses/Error'
+    delete:
+      summary: Delete agent
+      tags: [Agents]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+
+  /api/agents/{id}/verify:
+    post:
+      summary: Verify agent ownership (Ed25519)
+      tags: [Agents]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
               properties:
-                idempotency_key:
+                challenge:
                   type: string
+                signature:
+                  type: string
+      responses:
+        "200":
+          description: Challenge returned OR verification successful
+        "400":
+          $ref: '#/components/responses/Error'
+        "401":
+          $ref: '#/components/responses/Error'
+
+  /api/services:
+    get:
+      summary: List all services
+      tags: [Services]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Publish service
+      tags: [Services]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agent_id, service_name, base_price_nano]
+              properties:
                 agent_id:
                   type: string
-                  format: uuid
-                  description: ID of deal creator
+                service_name:
+                  type: string
+                base_price_nano:
+                  type: integer
+      responses:
+        "201":
+          description: Created
+
+  /api/services/search:
+    get:
+      summary: Search services
+      tags: [Services]
+      parameters:
+        - in: query
+          name: tag
+          schema:
+            type: string
+        - in: query
+          name: max_price
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Found services
+
+  /api/services/{id}:
+    get:
+      summary: Get service
+      tags: [Services]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    put:
+      summary: Update service
+      tags: [Services]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Updated
+    delete:
+      summary: Delete service
+      tags: [Services]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+
+  /api/requests:
+    get:
+      summary: List requests
+      tags: [Requests]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create request
+      tags: [Requests]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created
+
+  /api/requests/{id}:
+    get:
+      summary: Get request
+      tags: [Requests]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    put:
+      summary: Update request
+      tags: [Requests]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Updated
+    delete:
+      summary: Delete request
+      tags: [Requests]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+
+  /api/offers:
+    get:
+      summary: List offers
+      tags: [Offers]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create offer
+      tags: [Offers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created
+
+  /api/offers/{id}:
+    get:
+      summary: Get offer
+      tags: [Offers]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    put:
+      summary: Update offer (accept/reject)
+      tags: [Offers]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Updated
+    delete:
+      summary: Delete offer
+      tags: [Offers]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+
+  /api/deals:
+    get:
+      summary: List deals
+      tags: [Deals]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create deal from offer
+      tags: [Deals]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [request_id, offer_id]
+              properties:
                 request_id:
                   type: string
-                  format: uuid
                 offer_id:
                   type: string
-                  format: uuid
-                service_type:
+                execution_type:
                   type: string
-                  enum:
-                    - price_feed
-                    - execution_service
-                    - data_provider
-                    - custom
-                metadata:
+                  enum: [ton_transfer, jetton_transfer, nft_transfer, contract_call]
+                execution_payload:
                   type: object
       responses:
         "201":
-          description: Deal created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Deal"
+          description: Created
 
-  /deals/{dealId}:
+  /api/deals/{id}:
     get:
-      summary: Get deal details
-      operationId: getDeal
-      tags:
-        - Deals
+      summary: Get deal
+      tags: [Deals]
       parameters:
         - in: path
-          name: dealId
+          name: id
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         "200":
-          description: Deal found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Deal"
-        "404":
-          description: Deal not found
-
-  /deals/{dealId}/approve:
-    post:
-      summary: Approve deal execution
-      operationId: approveDeal
-      tags:
-        - Deals
-      description: |
-        Security gate. Both parties must approve before execution.
-        Status changes: awaiting_approval → approved
+          description: OK
+    put:
+      summary: Cancel deal
+      tags: [Deals]
       parameters:
         - in: path
-          name: dealId
+          name: id
           required: true
           schema:
             type: string
-            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - agent_id
               properties:
-                agent_id:
+                status:
                   type: string
-                  format: uuid
-                  description: Agent approving the deal
+                  enum: [cancelled]
       responses:
         "200":
-          description: Deal approved
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Deal"
-        "400":
-          description: Cannot approve (wrong state)
-        "404":
-          description: Deal not found
-
-  /deals/{dealId}/execute:
-    post:
-      summary: Execute deal (delegate to MCP)
-      operationId: executeDeal
-      tags:
-        - Deals
-      description: |
-        Delegate execution to MCP adapter (TON blockchain).
-        Status changes: approved → executed or failed
-        Idempotent — returns existing receipt if already executed.
+          description: Cancelled
+    delete:
+      summary: Delete deal
+      tags: [Deals]
       parameters:
         - in: path
-          name: dealId
+          name: id
           required: true
           schema:
             type: string
-            format: uuid
+      responses:
+        "200":
+          description: Deleted
+
+  /api/deals/{id}/approve:
+    post:
+      summary: Approve deal
+      tags: [Deals]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Approved
+
+  /api/deals/{id}/execute:
+    post:
+      summary: Execute deal via MCPAdapter
+      tags: [Deals]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Executed
+        "500":
+          $ref: '#/components/responses/Error'
+
+  /api/deals/{id}/reject:
+    post:
+      summary: Reject deal
+      tags: [Deals]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Rejected
+          
+  /api/messages:
+    get:
+      summary: List messages
+      tags: [Messages]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Send message
+      tags: [Messages]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - agent_id
-              properties:
-                agent_id:
-                  type: string
-                  format: uuid
+      responses:
+        "201":
+          description: Created
+
+  /api/messages/{id}:
+    get:
+      summary: Get message
+      tags: [Messages]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
       responses:
         "200":
-          description: Deal executed successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExecutionResult"
-        "400":
-          description: Cannot execute (wrong state or missing approvals)
-        "404":
-          description: Deal not found
-
-components:
-  schemas:
-    Agent:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        created_at:
-          type: string
-          format: date-time
-        name:
-          type: string
-        agent_type:
-          type: string
-          enum:
-            - requester
-            - provider
-            - orchestrator
-        metadata:
-          type: object
-
-    Request:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        created_at:
-          type: string
-          format: date-time
-        agent_id:
-          type: string
-          format: uuid
-        service_type:
-          type: string
-        status:
-          type: string
-          enum:
-            - open
-            - matched
-            - cancelled
-        requirements:
-          type: object
-        metadata:
-          type: object
-
-    Offer:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        created_at:
-          type: string
-          format: date-time
-        request_id:
-          type: string
-          format: uuid
-        agent_id:
-          type: string
-          format: uuid
-        price_nano:
-          type: string
-        status:
-          type: string
-          enum:
-            - pending
-            - accepted
-            - rejected
-        terms:
-          type: object
-        metadata:
-          type: object
-
-    Deal:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        created_at:
-          type: string
-          format: date-time
-        request_id:
-          type: string
-          format: uuid
-        offer_id:
-          type: string
-          format: uuid
-        requester_id:
-          type: string
-          format: uuid
-        provider_id:
-          type: string
-          format: uuid
-        service_type:
-          type: string
-        price_nano:
-          type: string
-        coordination_fee_nano:
-          type: string
-          description: Fee for TAK coordination (currently 0)
-        status:
-          type: string
-          enum:
-            - awaiting_approval
-            - approved
-            - executed
-            - failed
-            - cancelled
-        snapshot:
-          type: object
-          description: Immutable deal snapshot at creation time
-        approvals:
-          type: object
-          description: Approval status from both parties
-        execution_receipt:
-          type: string
-          description: Receipt from MCP execution
-        metadata:
-          type: object
-
-    ExecutionResult:
-      type: object
-      properties:
-        deal_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum:
-            - executed
-            - failed
-        receipt:
-          type: string
-          description: Execution receipt from MCP/TON
-        timestamp:
-          type: string
-          format: date-time
-        error:
-          type: string
-          description: Error message if execution failed
+          description: OK
+    delete:
+      summary: Delete message
+      tags: [Messages]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted

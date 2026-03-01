@@ -32,34 +32,78 @@ class TAK {
     /**
      * @param {Object} config
      * @param {string} config.baseUrl  - TAK server base URL (default: http://localhost:3000)
+     * @param {string} config.token    - Optional bearer token for auth
+     * @param {number} config.maxRetries - Number of retries on network error (default 3)
+     * @param {number} config.timeout  - Request timeout in ms (default 30000)
      */
-    constructor({ baseUrl = "http://localhost:3000" } = {}) {
+    constructor({ baseUrl = "http://localhost:3000", token, maxRetries = 3, timeout = 30000 } = {}) {
         this.baseUrl = baseUrl.replace(/\/$/, "");
+        this.token = token;
+        this.maxRetries = maxRetries;
+        this.timeout = timeout;
     }
 
     // ── Internal fetch wrapper ──────────────────────────────────
     async _request(method, path, body = null, idempotencyKey = null) {
+        let attempts = 0;
+        let lastError;
+
+        while (attempts <= this.maxRetries) {
+            try {
+                return await this._doRequest(method, path, body, idempotencyKey);
+            } catch (err) {
+                lastError = err;
+                // Only retry on network errors (status 0) or 5xx server errors
+                if (err.status && err.status >= 400 && err.status < 500) {
+                    throw err; // don't retry client errors
+                }
+                attempts++;
+                if (attempts <= this.maxRetries) {
+                    // Exponential backoff
+                    const delay = 500 * Math.pow(2, attempts - 1);
+                    await new Promise(r => setTimeout(r, delay));
+                }
+            }
+        }
+        throw lastError;
+    }
+
+    async _doRequest(method, path, body, idempotencyKey) {
         const url = `${this.baseUrl}${path}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
         const options = {
             method,
-            headers: { 
+            headers: {
                 "Content-Type": "application/json",
             },
+            signal: controller.signal
         };
-        
+
+        if (this.token) {
+            options.headers["Authorization"] = `Bearer ${this.token}`;
+        }
+
         // Add idempotency key header if provided
         if (idempotencyKey) {
             options.headers["Idempotency-Key"] = idempotencyKey;
         }
-        
+
         if (body !== null) options.body = JSON.stringify(body);
 
         let res;
         try {
             res = await fetch(url, options);
         } catch (err) {
+            clearTimeout(timeoutId);
+            if (err.name === 'AbortError') {
+                throw new TAKError(`Request timeout after ${this.timeout}ms`, 0, null);
+            }
             throw new TAKError(`Network error: ${err.message}`, 0, null);
         }
+
+        clearTimeout(timeoutId);
 
         const text = await res.text();
         let data;
@@ -67,7 +111,7 @@ class TAK {
 
         if (!res.ok) {
             throw new TAKError(
-                data?.error || `HTTP ${res.status}`,
+                data?.message || data?.error || `HTTP ${res.status}`,
                 res.status,
                 data
             );
@@ -92,9 +136,20 @@ class TAK {
         return this._request("GET", "/api/agents");
     }
 
+    /** Search agents by capability. */
+    searchAgents(params) {
+        const q = new URLSearchParams(params).toString();
+        return this._request("GET", `/api/agents/search?${q}`);
+    }
+
     /** Get a single agent by ID. */
     getAgent(id) {
         return this._request("GET", `/api/agents/${id}`);
+    }
+
+    /** Verify agent ownership via challenge-response. */
+    verifyAgent(id, signature, challenge) {
+        return this._request("POST", `/api/agents/${id}/verify`, { signature, challenge });
     }
 
     /** Update an agent's fields. */
@@ -123,6 +178,12 @@ class TAK {
     /** List all published services. */
     listServices() {
         return this._request("GET", "/api/services");
+    }
+
+    /** Search services by tag and max_price. */
+    searchServices(params) {
+        const q = new URLSearchParams(params).toString();
+        return this._request("GET", `/api/services/search?${q}`);
     }
 
     /** Get a single service by ID. */
@@ -246,6 +307,11 @@ class TAK {
         return this._request("POST", `/api/deals/${dealId}/approve`);
     }
 
+    /** Reject a deal (cancel it). */
+    rejectDeal(dealId) {
+        return this._request("POST", `/api/deals/${dealId}/reject`);
+    }
+
     /**
      * Execute a deal via the configured MCPAdapter.
      * Moves status: approved → executed
@@ -286,6 +352,15 @@ class TAK {
     /** Delete a message. */
     deleteMessage(id) {
         return this._request("DELETE", `/api/messages/${id}`);
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  SYSTEM
+    // ════════════════════════════════════════════════════════════
+
+    /** Get API health. */
+    health() {
+        return this._request("GET", "/health");
     }
 }
 
